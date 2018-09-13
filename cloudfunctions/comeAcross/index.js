@@ -9,7 +9,7 @@ exports.main = async (event, context) => {
   const _ = db.command
   let exit = await db.collection('comeacross').where({
     openid: event.userInfo.openId,
-    expirytime: _.gt(new Date())
+    expirytime: _.gt(Date.parse(new Date()))
   }).get()
   if (exit.data.length > 0){
     return false
