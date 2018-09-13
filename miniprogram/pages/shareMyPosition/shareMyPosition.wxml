@@ -15,7 +15,7 @@
     <view class="page-section">
       <view class="page-section-title">暗号</view>
       <view class="textarea-wrp">
-        <input name="code" maxlength="15" placeholder='确认过眼神，你是懂暗号的人。'></input> 
+        <input name="code" maxlength="15" placeholder='确认过眼神，你是懂暗号的人。'></input>
       </view>
     </view>
     <view class="btn-area">

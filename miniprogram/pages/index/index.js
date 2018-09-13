@@ -3,11 +3,14 @@ Page({
   data: {
     userInfo: {},
     markers: [],
+    myMarker: null,
     scale: 16,
     codeType: 1,
     codeInfo: '',
     canIUse: wx.canIUse('button.open-type.getUserInfo'),
-    hiddenLoading: true
+    hiddenLoading: true,
+    expirytime: 0,
+    timecheck: 0 //服务器时间与本地时间的差额
   },
   onLoad: function() {
     if (app.globalData.userInfo) {
@@ -27,6 +30,7 @@ Page({
         url: '../welcome/welcome',
       })
     }
+
     //创建地图
     this.mapCtx = wx.createMapContext('myMap')
     this.mapCtx.moveToLocation()
@@ -39,6 +43,45 @@ Page({
         that.updateUserInfo()
         that.updateLocation()
         that.getAround()
+      }
+    })
+    //当前广播状态
+    wx.cloud.callFunction({
+      name: 'comeAcrossState'
+    }).then(res => {
+      if (res.result.length > 0) {
+        let data = res.result[0]
+        let markers = that.data.markers
+        markers.filter((item, index) => {
+          if (item.openid === 0) {
+            markers.splice(index, 1)
+          }
+        })
+        let myMarker = {
+          openid: 0,
+          latitude: data.latitude,
+          longitude: data.longitude,
+          iconPath: data.iconPath,
+          height: 32,
+          width: 32,
+          callout: {
+            content: data.message,
+            display: 'ALWAYS',
+            borderRadius: 2,
+            padding: 5,
+            textAlign: 'left',
+            color: '#fff',
+            bgColor: '#222'
+          }
+        }
+        markers.push(myMarker)
+        that.setData({
+          markers: markers,
+          myMarker: myMarker,
+          expirytime: data.expirytime,
+          codeInfo: data.codeinfo,
+          timecheck: data.nowtime - Date.parse(new Date())
+        })
       }
     })
   },
@@ -75,7 +118,7 @@ Page({
   },
 
   //更新位置
-  updateLocation: function () {
+  updateLocation: function() {
     wx.getLocation({
       type: 'gcj02',
       success: res => {
@@ -90,97 +133,17 @@ Page({
   },
 
   //获取附近用户
-  getAround:function(){
+  getAround: function() {
     wx.cloud.callFunction({
       name: 'getAround',
       data: {
         codeInfo: this.data.codeInfo
       }
+    }).then(res => {
+      // console.log(res)
     })
   },
 
-  addOrUpdate: function() {
-    this.setData({
-      hiddenLoading: true
-    })
-    return;
-    //位置信息
-    wx.getLocation({
-      type: 'gcj02',
-      success: res => {
-        this.mapCtx.moveToLocation();
-        let user = this.data.userInfo;
-        user.latitude = res.latitude
-        user.longitude = res.longitude
-        user.openid = app.globalData.openid
-        this.setData({
-          userInfo: user,
-          hiddenLoading: true
-        })
-
-        app.globalData.latitude = res.latitude;
-        app.globalData.longitude = res.longitude;
-
-
-        wx.cloud.callFunction({
-          name: 'addUser',
-          data: user,
-          success: res => {
-            console.log(res)
-          },
-          fail: err => {
-            console.error('【Error】', err)
-          }
-        })
-        return;
-        //更新用户数据
-        wx.request({
-          url: 'https://www.20180905.cn/ComeAcross/addorupdate',
-          data: user,
-          method: 'POST',
-          success: rsp => {}
-        })
-        //展示周边用户数据  TODO
-        wx.request({
-          url: 'https://www.20180905.cn/ComeAcross/getaround',
-          data: {
-            latitude: res.latitude,
-            longitude: res.longitude,
-            codeType: this.data.codeType,
-            codeInfo: this.data.codeInfo
-          },
-          success: rsp => {
-            var markers = [];
-            if (rsp.statusCode == 200) {
-              for (let i = 0; i < rsp.data.length; i++) {
-                markers.push({
-                  id: rsp.data[i].id,
-                  latitude: rsp.data[i].latitude,
-                  longitude: rsp.data[i].longitude,
-                  iconPath: rsp.data[i].iconPath,
-                  height: 32,
-                  width: 32,
-                  callout: {
-                    content: "我是谁，我在哪，我在弄啥呢",
-                    display: 'ALWAYS',
-                    borderRadius: 2,
-                    padding: 5,
-                    textAlign: 'left',
-                    color: '#fff',
-                    bgColor: '#222'
-                  }
-                })
-              }
-            }
-            console.log(markers);
-            this.setData({
-              markers: markers
-            })
-          }
-        })
-      }
-    })
-  },
   //点击头像
   markertap: function(e) {
     let url = '../info/info?Id=' + e.markerId;
@@ -196,9 +159,30 @@ Page({
   },
   //共享我的位置
   shareMyPosition: function() {
-    wx.navigateTo({
-      url: '../shareMyPosition/shareMyPosition'
-    })
+    let countdown = this.data.expirytime - Date.parse(new Date) - this.data.timecheck
+    if (countdown > 0) {
+      wx.showModal({
+        title: '位置广播中',
+        content: '倒计时' + countdown / 1000 + '秒',
+        cancelText: '重播',
+        cancelColor: '#FF0000',
+        success: res => {
+          if (res.cancel) {
+            wx.cloud.callFunction({
+              name: 'cancelComeAcross'
+            }).then(res => {
+              wx.navigateTo({
+                url: '../shareMyPosition/shareMyPosition'
+              })
+            })
+          }
+        }
+      })
+    } else {
+      wx.navigateTo({
+        url: '../shareMyPosition/shareMyPosition'
+      })
+    }
   },
   //我的信息
   myself: function() {
