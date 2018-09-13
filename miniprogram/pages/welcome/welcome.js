@@ -64,7 +64,6 @@ Page({
 
   },
   bindgetuserinfo: function (e) {
-    console.log(e)
     if (e.detail.userInfo)
     {
       wx.redirectTo({

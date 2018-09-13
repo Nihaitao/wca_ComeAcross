@@ -7,16 +7,13 @@ Page({
     codeType: 1,
     codeInfo: '',
     canIUse: wx.canIUse('button.open-type.getUserInfo'),
-    hiddenLoading: false
+    hiddenLoading: true
   },
   onLoad: function() {
-    //创建地图
-    this.mapCtx = wx.createMapContext('myMap')
     if (app.globalData.userInfo) {
       this.setData({
         userInfo: app.globalData.userInfo
       })
-      this.addOrUpdate()
     } else if (this.data.canIUse) {
       // 由于 getUserInfo 是网络请求，可能会在 Page.onLoad 之后才返回
       // 所以此处加入 callback 以防止这种情况
@@ -24,17 +21,85 @@ Page({
         this.setData({
           userInfo: res.userInfo
         })
-        this.addOrUpdate()
       }
     } else {
       wx.redirectTo({
         url: '../welcome/welcome',
       })
     }
+    //创建地图
+    this.mapCtx = wx.createMapContext('myMap')
+    this.mapCtx.moveToLocation()
+  },
+  onShow: function() {
+    var that = this
+    let interval = setInterval(function() {
+      if (that.data.userInfo.nickName || that.data.userInfo.avatarUrl) {
+        clearInterval(interval)
+        that.updateUserInfo()
+        that.updateLocation()
+        that.getAround()
+      }
+    })
   },
 
+  //更新用户
+  updateUserInfo: function() {
+    if (this.data.userInfo.avatarUrl != app.globalData.avatarUrl) {
+      app.globalData.avatarUrl = this.data.userInfo.avatarUrl
+      //下载头像
+      wx.downloadFile({
+        url: this.data.userInfo.avatarUrl,
+        success: res => {
+          let user = this.data.userInfo
+          user.iconPath = res.tempFilePath.replace('http:/', '').replace('https:/', '')
+          this.setData({
+            userInfo: user
+          })
+          wx.cloud.callFunction({
+            name: 'addUser',
+            data: {
+              user: user
+            }
+          })
+        }
+      })
+    } else {
+      wx.cloud.callFunction({
+        name: 'addUser',
+        data: {
+          user: this.data.userInfo
+        }
+      })
+    }
+  },
 
-  addOrUpdate: function () {
+  //更新位置
+  updateLocation: function () {
+    wx.getLocation({
+      type: 'gcj02',
+      success: res => {
+        wx.cloud.callFunction({
+          name: 'addLocation',
+          data: {
+            location: res
+          }
+        })
+      }
+    })
+  },
+
+  //获取附近用户
+  getAround:function(){
+    wx.cloud.callFunction({
+      name: 'getAround',
+      data: {
+        codeInfo: this.data.codeInfo
+      }
+    })
+  },
+
+  addOrUpdate: function() {
     this.setData({
       hiddenLoading: true
     })

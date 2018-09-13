@@ -9,34 +9,19 @@ exports.main = async(event, context) => {
   let user = await db.collection('userinfo').where({
     openid: event.userInfo.openId
   }).get()
-  console.log(user)
   if (user.data.length > 0) {
-    console.log(1)
-    console.log(event.user)
+    //更新
     return await db.collection('userinfo').where({
       openid: event.userInfo.openId
-    }).update({data: event.user})
+    }).update({
+      data: event.user
+    }).catch(console.error)
   } else {
-    console.log(2)
+    //新增
     let newuser = event.user
     newuser.openid = event.userInfo.openId
-    console.log(newuser)
-    try {
-      return await db.collection('userinfo').add({
-        // data 字段表示需新增的 JSON 数据
-        data: newuser
-      })
-    } catch (e) {
-      console.error(e)
-    }
-    // db.collection('userinfo').add({
-    //   data: newuser
-    //   })
-    //   .then(res => {
-    //     console.log(3)
-    //     console.log(res)
-    //   })
-    //   .catch(console.error)
+    return await db.collection('userinfo').add({
+      data: newuser
+    }).catch(console.error)
   }
-
 }
