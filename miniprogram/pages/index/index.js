@@ -5,12 +5,19 @@ Page({
     markers: [],
     myMarker: null,
     scale: 16,
-    codeType: 1,
+    codeType: 0,
     codeInfo: '',
     canIUse: wx.canIUse('button.open-type.getUserInfo'),
     hiddenLoading: true,
     expirytime: 0,
-    timecheck: 0 //服务器时间与本地时间的差额
+    timecheck: 0, //服务器时间与本地时间的差额
+    time: {
+      hour: 0,
+      min1: 0,
+      min2: 0,
+      sec1: 0,
+      sec2: 0
+    }
   },
   onLoad: function() {
     if (app.globalData.userInfo) {
@@ -35,6 +42,10 @@ Page({
     this.mapCtx = wx.createMapContext('myMap')
     this.mapCtx.moveToLocation()
   },
+  onReady: function() {
+    //获得dialog组件
+    this.countdown = this.selectComponent("#countdown");
+  },
   onShow: function() {
     var that = this
     let interval = setInterval(function() {
@@ -49,14 +60,14 @@ Page({
     wx.cloud.callFunction({
       name: 'comeAcrossState'
     }).then(res => {
+      let markers = that.data.markers
+      markers.filter((item, index) => {
+        if (item.openid === 0) {
+          markers.splice(index, 1)
+        }
+      })
       if (res.result.length > 0) {
         let data = res.result[0]
-        let markers = that.data.markers
-        markers.filter((item, index) => {
-          if (item.openid === 0) {
-            markers.splice(index, 1)
-          }
-        })
         let myMarker = {
           openid: 0,
           latitude: data.latitude,
@@ -81,6 +92,14 @@ Page({
           expirytime: data.expirytime,
           codeInfo: data.codeinfo,
           timecheck: data.nowtime - Date.parse(new Date())
+        })
+      } else {
+        that.setData({
+          markers: markers,
+          myMarker: null,
+          expirytime: 0,
+          codeInfo: '',
+          timecheck: 0
         })
       }
     })
@@ -137,10 +156,39 @@ Page({
     wx.cloud.callFunction({
       name: 'getAround',
       data: {
+        codeType: this.data.codeType,
         codeInfo: this.data.codeInfo
       }
     }).then(res => {
-      // console.log(res)
+      let markers = []
+      for (let i = 0; i < res.result.data.length; i++) {
+        let data = res.result.data[i]
+        markers.push({
+          openid: data.openid,
+          latitude: data.latitude,
+          longitude: data.longitude,
+          iconPath: data.iconPath,
+          height: 32,
+          width: 32,
+          callout: {
+            content: data.message,
+            display: 'ALWAYS',
+            borderRadius: 2,
+            borderWidth:2,
+            borderColor: '#222',
+            padding: 5,
+            textAlign: 'left',
+            color: '#222',
+            bgColor: '#fff'
+          }
+        })
+      }
+      if (this.data.myMarker) {
+        markers.push(this.data.myMarker)
+      }
+      this.setData({
+        markers: markers
+      })
     })
   },
 
@@ -156,28 +204,14 @@ Page({
   //定位
   myPosition: function() {
     this.mapCtx.moveToLocation();
+    console.log(this.data)
   },
   //共享我的位置
   shareMyPosition: function() {
     let countdown = this.data.expirytime - Date.parse(new Date) - this.data.timecheck
     if (countdown > 0) {
-      wx.showModal({
-        title: '位置广播中',
-        content: '倒计时' + countdown / 1000 + '秒',
-        cancelText: '重播',
-        cancelColor: '#FF0000',
-        success: res => {
-          if (res.cancel) {
-            wx.cloud.callFunction({
-              name: 'cancelComeAcross'
-            }).then(res => {
-              wx.navigateTo({
-                url: '../shareMyPosition/shareMyPosition'
-              })
-            })
-          }
-        }
-      })
+      this.countdown.showDialog();
+      this.countDownFn(countdown / 1000)
     } else {
       wx.navigateTo({
         url: '../shareMyPosition/shareMyPosition'
@@ -196,6 +230,7 @@ Page({
       url: '../friends/friends'
     })
   },
+  //暗号
   code: function() {
     if (this.data.codeType === 1) {
       this.setData({
@@ -206,5 +241,67 @@ Page({
         codeType: 1
       })
     }
+    this.getAround()
+  },
+  //重播
+  replayFn: function() {
+    wx.cloud.callFunction({
+      name: 'cancelComeAcross'
+    }).then(res => {
+      this.countdown.hideDialog()
+      clearInterval(this.cdInterval)
+      wx.navigateTo({
+        url: '../shareMyPosition/shareMyPosition'
+      })
+    })
+  },
+  //关闭倒计时窗口
+  closeFn: function() {
+    this.countdown.hideDialog()
+    clearInterval(this.cdInterval)
+  },
+  //倒计时
+  countDownFn: function(seconds) {
+    var that = this
+    that.cdInterval = setInterval(function() {
+      that.formatSeconds(seconds)
+      seconds--
+      if (seconds === 0) {
+        clearInterval(that.cdInterval)
+        that.countdown.hideDialog()
+        that.setData({
+          myMarker: null
+        })
+        that.getAround()
+      }
+    }, 1000)
+  },
+  //格式化时间
+  formatSeconds: function(seconds) {
+    let hour = parseInt(seconds / 3600)
+    let min = parseInt(seconds % 3600 / 60)
+    let min1 = 0,
+      min2 = min
+    if (min >= 10) {
+      min1 = parseInt(min / 10)
+      min2 = min % 10
+    }
+    let sec = seconds % 3600 % 60
+    let sec1 = 0,
+      sec2 = sec
+    if (sec >= 10) {
+      sec1 = parseInt(sec / 10)
+      sec2 = sec % 10
+    }
+    let time = {
+      hour: hour,
+      min1: min1,
+      min2: min2,
+      sec1: sec1,
+      sec2: sec2
+    }
+    this.setData({
+      time: time
+    })
   }
 })

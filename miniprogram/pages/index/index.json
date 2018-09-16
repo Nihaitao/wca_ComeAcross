@@ -1,1 +1,5 @@
-{}
+{
+  "usingComponents": {
+    "countdown": "/component/dialog/countdown"
+  }
+}

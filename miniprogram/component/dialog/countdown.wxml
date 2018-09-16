@@ -1,0 +1,29 @@
+<!--component/dialog/countdown.wxml-->
+<view class='wx_dialog_container' hidden="{{!isShow}}">
+  <view class='wx-mask'></view>
+  <view class='wx-dialog'>
+    <view class='wx-dialog-title'>{{title}}</view>
+    <view class='wx-dialog-content'>
+      <view class="dash">
+        <span class="dash_title">Hours</span>
+        <view class="digit">0</view>
+        <view class="digit">{{hour}}</view>
+      </view>
+      <view class="dash">
+        <span class="dash_title">Minutes</span>
+        <view class="digit">{{min1}}</view>
+        <view class="digit">{{min2}}</view>
+      </view>
+      <view class="dash">
+        <span class="dash_title">Seconds</span>
+        <view class="digit">{{sec1}}</view>
+        <view class="digit">{{sec2}}</view>
+      </view>
+    </view>
+    <view class='wx-dialog-footer'>
+      <view class='wx-dialog-btn' catchtap='_cancelEvent'>{{cancelText}}</view>
+      <view class='wx-dialog-btn' catchtap='_confirmEvent'>{{ confirmText}}
+      </view>
+    </view>
+  </view>
+</view>
