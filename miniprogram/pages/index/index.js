@@ -17,7 +17,8 @@ Page({
       min2: 0,
       sec1: 0,
       sec2: 0
-    }
+    },
+    hiddenMap: false
   },
   onLoad: function() {
     if (app.globalData.userInfo) {
@@ -69,7 +70,7 @@ Page({
       if (res.result.length > 0) {
         let data = res.result[0]
         let myMarker = {
-          openid: 0,
+          id: 0,
           latitude: data.latitude,
           longitude: data.longitude,
           iconPath: data.iconPath,
@@ -164,7 +165,7 @@ Page({
       for (let i = 0; i < res.result.data.length; i++) {
         let data = res.result.data[i]
         markers.push({
-          openid: data.openid,
+          id: data.openid,
           latitude: data.latitude,
           longitude: data.longitude,
           iconPath: data.iconPath,
@@ -174,7 +175,7 @@ Page({
             content: data.message,
             display: 'ALWAYS',
             borderRadius: 2,
-            borderWidth:2,
+            borderWidth: 1,
             borderColor: '#222',
             padding: 5,
             textAlign: 'left',
@@ -211,6 +212,10 @@ Page({
     let countdown = this.data.expirytime - Date.parse(new Date) - this.data.timecheck
     if (countdown > 0) {
       this.countdown.showDialog();
+      this.setData({
+        hiddenMap: true
+      })
+
       this.countDownFn(countdown / 1000)
     } else {
       wx.navigateTo({
@@ -249,6 +254,9 @@ Page({
       name: 'cancelComeAcross'
     }).then(res => {
       this.countdown.hideDialog()
+      this.setData({
+        hiddenMap: false
+      })
       clearInterval(this.cdInterval)
       wx.navigateTo({
         url: '../shareMyPosition/shareMyPosition'
@@ -258,6 +266,9 @@ Page({
   //关闭倒计时窗口
   closeFn: function() {
     this.countdown.hideDialog()
+    this.setData({
+      hiddenMap: false
+    })
     clearInterval(this.cdInterval)
   },
   //倒计时
@@ -270,7 +281,8 @@ Page({
         clearInterval(that.cdInterval)
         that.countdown.hideDialog()
         that.setData({
-          myMarker: null
+          myMarker: null,
+          hiddenMap: false
         })
         that.getAround()
       }

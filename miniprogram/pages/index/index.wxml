@@ -2,7 +2,7 @@
 <loading hidden="{{hiddenLoading}}">loading</loading>
 <view class="page-body">
   <view class="page-section page-section-gap">
-    <map id="myMap" style="width: 100%; height: 100vh;" markers="{{markers}}" scale="{{scale}}" bindmarkertap="markertap" show-location='true'>
+    <map id="myMap" hidden='{{hiddenMap}}' style="width: 100%; height: 100vh;" markers="{{markers}}" scale="{{scale}}" bindmarkertap="markertap" show-location='true'>
       <cover-view class="controls code">
         <cover-view class="topConver" bindtap="code">
           <cover-image class="{{codeType == 0 ? 'codeopenimg' : 'codecloseimg'}}" src="{{codeType == 0 ? '/images/codeopen.png' : '/images/codeclose.png'}}" />
@@ -28,6 +28,6 @@
       </cover-view>
     </map>
   </view>
-  <countdown id='countdown' title='位置广播中' confirmText='确定' cancelText='重播' hour='{{time.hour}}'  min1='{{time.min1}}'  min2='{{time.min2}}'  sec1='{{time.sec1}}'  sec2='{{time.sec2}}'  bind:cancelEvent="replayFn" bind:confirmEvent="closeFn">
-  </countdown>
 </view>
+<countdown id='countdown' title='位置广播中' confirmText='确定' cancelText='重播' hour='{{time.hour}}' min1='{{time.min1}}' min2='{{time.min2}}' sec1='{{time.sec1}}' sec2='{{time.sec2}}' bind:cancelEvent="replayFn" bind:confirmEvent="closeFn">
+</countdown>

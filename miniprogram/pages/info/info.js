@@ -26,15 +26,6 @@ Page({
    * 生命周期函数--监听页面加载
    */
   onLoad: function(options) {
-    
-    wx.request({
-      url: 'http://www.20180905.cn:7001/userinfo',
-      data: {id:options.Id},
-      success: rsp => {
-        console.log(rsp);
-      }
-    })
-    console.log(options)
 
   },
   openActionsheetSh: function(e) {
