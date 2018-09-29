@@ -5,20 +5,7 @@ Page({
    * 页面的初始数据
    */
   data: {
-    userInfo: {
-      id: 1,
-      nickName: "享燕遇",
-      sex: 1,
-      avatarUrl: "../../images/132.jpg",
-      attention: 185,
-      fans: 25,
-      markers: [{
-        id: 1,
-        latitude: 23.099994,
-        longitude: 113.324520,
-        name: 'T.I.T 创意园'
-      }]
-    },
+    userInfo: {},
     mapHeight: '55vh'
   },
 
@@ -26,7 +13,32 @@ Page({
    * 生命周期函数--监听页面加载
    */
   onLoad: function(options) {
+    console.log(options)
 
+    wx.cloud.callFunction({
+      name: 'userinfo',
+      data: {
+        openid: options.id
+      }
+    }).then(res => {
+      console.log(res)
+      let user = res.result.user.data[0]
+      let location = res.result.location.data[0]
+      this.setData({
+        userInfo: {
+          id: options.id,
+          nickName: user.nickName,
+          sex: user.gender,
+          avatarUrl: user.avatarUrl,
+          attention: 185,
+          fans: 25,
+          markers: [{
+            latitude: location.latitude,
+            longitude: location.longitude,
+          }]
+        }
+      })
+    })
   },
   openActionsheetSh: function(e) {
     // let item = e.currentTarget.dataset.item;
