@@ -17,7 +17,7 @@
 </view>
 <view class='foot'>
   <view class='foot-view'>
-    <view class='foot-view-left'><label class='foot-label'>☰</label>互相关注</view>
+    <view class='foot-view-left'><label class='foot-label'>☰</label>{{userInfo.relation}}</view>
     <view class='foot-view-middle'>|</view>
     <view class='foot-view-right'><label class='foot-label'>☰</label>撩一下</view>
   </view>

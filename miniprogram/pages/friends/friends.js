@@ -3,7 +3,7 @@ Page({
   data: {
     currentTab: 0,
     attentionList: [{
-      id:1,
+      id:'oF2SA4n5tz8wcokiVjJJtoCOvxUU',
       nikname: "Suck",
       distance: "麓谷企业广场 0m",
       time: "现在",
@@ -56,7 +56,13 @@ Page({
       time: "一周前",
     }]
   },
-
+  onLoad: function (options) {
+    wx.cloud.callFunction({
+      name: 'friendlist',
+    }).then(res => {
+      console.log(res)
+    })
+  },
   bindChange: function(e) {
     var that = this;
     that.setData({
